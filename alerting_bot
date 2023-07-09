@@ -1,0 +1,28 @@
+import telegram
+from flask import Flask, request
+
+# Replace 'YOUR_BOT_TOKEN' with your actual bot token
+bot_token = 'YOUR_BOT_TOKEN'
+
+# Replace 'YOUR_CHAT_ID' with the chat ID of your Telegram group or user
+chat_id = 'YOUR_CHAT_ID'
+
+bot = telegram.Bot(token=bot_token)
+app = Flask(__name__)
+
+@app.route('/alert', methods=['POST'])
+def alert():
+    data = request.get_json()
+
+    if 'alerts' in data:
+        for alert in data['alerts']:
+            send_alert(alert)
+
+    return 'OK', 200
+
+def send_alert(alert):
+    message = f"ALERT: {alert['status']} - {alert['annotations']['summary']}"
+    bot.send_message(chat_id=chat_id, text=message)
+      
+if __name__ == '__main__':
+    app.run()
