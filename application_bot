@@ -1,0 +1,51 @@
+from telegram.error import TelegramError
+
+from telegram import ReplyKeyboardMarkup
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, filters
+
+
+def start(update: Update, context: CallbackContext) -> None:
+    user = update.effective_user
+    name = user.first_name
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=f"Hello, {name}! I'm applications collector bot. I can collect applications and trasfer em to a channel administrator.\n"
+                                  "choose one:",
+                             reply_markup=ReplyKeyboardMarkup([['option1'], ['option2'], ['option3'], ['option4']],
+                                                              one_time_keyboard=True))
+def option_handler(update: Update, context: CallbackContext) -> None:
+    user = update.effective_user
+    name = user.first_name
+    text = update.message.text
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                         text=f"Thank you, {name}! Your request for {text} is submitted.")
+    # Log the user's choice of option
+    with open("log.txt", "a") as f:
+        f.write(f"{name} ({user.id}) selected option {text}\n")
+def help(update: Update, context: CallbackContext) -> None:
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="Choose one or more options:",
+                             reply_markup=ReplyKeyboardMarkup([['option1'], ['option2'], ['option3'], ['option4']],
+                                                              one_time_keyboard=True))
+def error_handler(update: Update, context: CallbackContext) -> None:
+    # This will send a message to the user indicating that an error has occurred, and also log the error in the console.
+    context.bot.send_message(chat_id=update.effective_chat.id, text="An error occured.")
+    context.error(str(update) + str(context.error))	
+def handle_message(update: Update, context: CallbackContext) -> None:
+    message = update.message.text
+    # Process the message and generate a response
+    response = "Hello, You wrote: " + message
+    # Send the response back to the user
+    update.message.reply_text(response)
+def main() -> None:
+    updater = Updater(token='token')
+    dispatcher = updater.dispatcher
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(MessageHandler(filters.Text & ~filters.Command, option_handler))
+    dispatcher.add_handler(CommandHandler('help', help))
+    dispatcher.add_handler(MessageHandler(filters.Text & ~filters.Command, handle_message))
+    dispatcher.add_error_handler(error_handler)
+    updater.start_polling()
+    updater.idle()
+if __name__ == '__main__':
+    main()
